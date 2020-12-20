@@ -52,16 +52,6 @@ void CEcon::ConchainEconOutputLevelUpdate(IConsole::IResult *pResult, void *pUse
 	}
 }
 
-void CEcon::ConchainEconLingerUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
-{
-	pfnCallback(pResult, pCallbackUserData);
-	if(pResult->NumArguments() == 1)
-	{
-		CEcon *pThis = static_cast<CEcon *>(pUserData);
-		pThis->m_NetConsole.SetLingerState(pResult->GetInteger(0));
-	}
-}
-
 void CEcon::ConLogout(IConsole::IResult *pResult, void *pUserData)
 {
 	CEcon *pThis = static_cast<CEcon *>(pUserData);
@@ -74,29 +64,15 @@ void CEcon::Init(CConfig *pConfig, IConsole *pConsole, CNetBan *pNetBan)
 {
 	m_pConfig = pConfig;
 	m_pConsole = pConsole;
-	m_pNetBan = pNetBan;
 
 	for(int i = 0; i < NET_MAX_CONSOLE_CLIENTS; i++)
 		m_aClients[i].m_State = CClient::STATE_EMPTY;
 
-	SetDefaultValues();
-}
-
-void CEcon::SetDefaultValues()
-{
 	m_Ready = false;
-	m_LastOpenTry = 0;
 	m_UserClientID = -1;
-}
 
-bool CEcon::Open()
-{
 	if(m_pConfig->m_EcPort == 0 || m_pConfig->m_EcPassword[0] == 0)
-		return false;
-
-	int64 Now = time_get();
-	if(m_LastOpenTry + 60 * time_freq() > Now)	// try again every 60s
-		return false;
+		return;
 
 	NETADDR BindAddr;
 	if(m_pConfig->m_EcBindaddr[0] && net_host_lookup(m_pConfig->m_EcBindaddr, &BindAddr, NETTYPE_ALL) == 0)
@@ -112,32 +88,26 @@ bool CEcon::Open()
 		BindAddr.port = m_pConfig->m_EcPort;
 	}
 
-	if(m_NetConsole.Open(BindAddr, m_pNetBan, NewClientCallback, DelClientCallback, this))
+	if(m_NetConsole.Open(BindAddr, pNetBan, NewClientCallback, DelClientCallback, this))
 	{
 		m_Ready = true;
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "bound to %s:%d", m_pConfig->m_EcBindaddr, m_pConfig->m_EcPort);
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD,"econ", aBuf);
-		m_NetConsole.SetLingerState(m_pConfig->m_NetTcpAbortOnClose);
 
 		Console()->Chain("ec_output_level", ConchainEconOutputLevelUpdate, this);
-		Console()->Chain("net_tcp_abort_on_close", ConchainEconLingerUpdate, this);
 		m_PrintCBIndex = Console()->RegisterPrintCallback(m_pConfig->m_EcOutputLevel, SendLineCB, this);
 
 		Console()->Register("logout", "", CFGFLAG_ECON, ConLogout, this, "Logout of econ");
-		return true;
 	}
 	else
-		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "econ", "couldn't open socket. port might already be in use");
-
-	m_LastOpenTry = Now;
-	return false;
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD,"econ", "couldn't open socket. port might already be in use");
 }
 
 void CEcon::Update()
 {
-	if(!m_Ready && !Open())
-		return;	
+	if(!m_Ready)
+		return;
 
 	m_NetConsole.Update();
 
@@ -215,5 +185,4 @@ void CEcon::Shutdown()
 		return;
 
 	m_NetConsole.Close();
-	SetDefaultValues();
 }

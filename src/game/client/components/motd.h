@@ -9,8 +9,6 @@ class CMotd : public CComponent
 	// motd
 	int64 m_ServerMotdTime;
 	char m_aServerMotd[1024];
-	CTextCursor m_ServerMotdCursor;
-
 public:
 	void Clear();
 	bool IsActive();

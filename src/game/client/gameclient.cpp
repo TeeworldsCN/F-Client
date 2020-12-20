@@ -406,8 +406,21 @@ void CGameClient::OnInit()
 	m_pMenus->InitLoading(TotalWorkAmount);
 	m_pMenus->RenderLoading(4);
 
-	m_pTextRender->LoadFonts(Storage(), Console());
-	m_pTextRender->SetFontLanguageVariant(Config()->m_ClLanguagefile);
+	// load default font
+	char aFontName[IO_MAX_PATH_LENGTH];
+	str_format(aFontName, sizeof(aFontName), "fonts/%s", Config()->m_ClFontfile);
+	char aFilename[IO_MAX_PATH_LENGTH];
+	IOHANDLE File = Storage()->OpenFile(aFontName, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename));
+	if(File)
+	{
+		io_close(File);
+		if(TextRender()->LoadFont(aFilename))
+		{
+			char aBuf[256];
+			str_format(aBuf, sizeof(aBuf), "failed to load font. filename='%s'", aFontName);
+			Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "gameclient", aBuf);
+		}
+	}
 	m_pMenus->RenderLoading(1);
 
 	// set the language
@@ -603,6 +616,7 @@ void CGameClient::OnReset()
 		m_DemoSpecID = -1;
 		m_Tuning[CLIENT_MAIN] = CTuningParams();
 		m_Tuning[CLIENT_DUMMY] = CTuningParams();
+		m_MuteServerBroadcast = false;
 		m_LastGameStartTick = -1;
 		m_LastFlagCarrierRed = FLAG_MISSING;
 		m_LastFlagCarrierBlue = FLAG_MISSING;
@@ -824,7 +838,7 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, bool IsDummy)
 				break;
 			case GAMEMSG_TEAM_ALL:
 				{
-					const char *pMsg = "";
+					const char *pMsg;
 					switch(GetStrTeam(aParaI[0], TeamPlay))
 					{
 					case STR_TEAM_GAME: pMsg = Localize("All players were moved to the game"); break;
@@ -832,7 +846,7 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, bool IsDummy)
 					case STR_TEAM_BLUE: pMsg = Localize("All players were moved to the blue team"); break;
 					case STR_TEAM_SPECTATORS: pMsg = Localize("All players were moved to the spectators"); break;
 					}
-					m_pBroadcast->DoClientBroadcast(pMsg);
+					m_pBroadcast->DoBroadcast(pMsg);
 				}
 				break;
 			case GAMEMSG_TEAM_BALANCE_VICTIM:
@@ -843,7 +857,7 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, bool IsDummy)
 					case STR_TEAM_RED: pMsg = Localize("You were moved to the red team due to team balancing"); break;
 					case STR_TEAM_BLUE: pMsg = Localize("You were moved to the blue team due to team balancing"); break;
 					}
-					m_pBroadcast->DoClientBroadcast(pMsg);
+					m_pBroadcast->DoBroadcast(pMsg);
 				}
 				break;
 			case GAMEMSG_CTF_GRAB:
@@ -913,7 +927,7 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, bool IsDummy)
 			m_pChat->AddLine(pText);
 			break;
 		case DO_BROADCAST:
-			m_pBroadcast->DoClientBroadcast(pText);
+			m_pBroadcast->DoBroadcast(pText);
 			break;
 		}
 	}
