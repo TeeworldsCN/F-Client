@@ -111,6 +111,11 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	char m_RconPassword[32];
 	int m_UseTempRconCommands;
 
+	// timeout
+	char m_aTimeoutCodes[NUM_CLIENTS][32];
+	bool m_aTimeoutCodeSent[NUM_CLIENTS];
+	bool m_GenerateTimeoutSeed;
+
 	// version-checking
 	char m_aVersionStr[10];
 
@@ -255,6 +260,9 @@ public:
 	int m_DummyConnected;
 	int m_LastDummyConnectTime;
 
+	virtual void GenerateTimeoutSeed();
+	void GenerateTimeoutCodes();
+
 	virtual void GetServerInfo(CServerInfo *pServerInfo);
 
 	// ---
@@ -308,6 +316,7 @@ public:
 
 	static void Con_Connect(IConsole::IResult *pResult, void *pUserData);
 	static void Con_Disconnect(IConsole::IResult *pResult, void *pUserData);
+	static void ConchainTimeoutSeed(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void Con_Quit(IConsole::IResult *pResult, void *pUserData);
 	static void Con_Minimize(IConsole::IResult *pResult, void *pUserData);
 	static void Con_Ping(IConsole::IResult *pResult, void *pUserData);
