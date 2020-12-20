@@ -215,7 +215,7 @@ void CInfoMessages::RenderKillMsg(CInfoMsg *pInfoMsg, float x, float y) const
 
 	// render victim name
 	x -= VictimNameW;
-<<<<<<< HEAD
+/*<<<<<<< HEAD
 	CTextCursor Cursor;
 	TextRender()->SetCursor(&Cursor, x, y, FontSize, TEXTFLAG_RENDER);
 
@@ -230,11 +230,11 @@ void CInfoMessages::RenderKillMsg(CInfoMsg *pInfoMsg, float x, float y) const
 	RenderTools()->DrawClientID(TextRender(), &Cursor, pInfoMsg->m_Player1ID, BgIdColor);
 	TextRender()->TextEx(&Cursor, pInfoMsg->m_aPlayer1Name, -1);
 	TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
-=======
+=======*/
 	float AdvanceID = RenderTools()->DrawClientID(TextRender(), pInfoMsg->m_Player1NameCursor.m_FontSize, vec2(x, y), pInfoMsg->m_Player1ID);
 	pInfoMsg->m_Player1NameCursor.MoveTo(x + AdvanceID, y);
 	TextRender()->DrawTextOutlined(&pInfoMsg->m_Player1NameCursor);
->>>>>>> master
+//>>>>>>> master
 
 	// render victim tee
 	x -= 24.0f;
