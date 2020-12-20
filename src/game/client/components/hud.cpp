@@ -824,6 +824,25 @@ void CHud::RenderSpectatorHud()
 	TextRender()->TextOutlined(&s_SpectateTargetCursor, aBuf, -1);
 }
 
+void CHud::RenderLocalTime(float x)
+{
+	if(!Config()->m_ClShowLocalTimeAlways && !m_pClient->m_pScoreboard->IsActive())
+		return;
+
+	//draw the box
+	Graphics()->BlendNormal();
+	Graphics()->TextureClear();
+	Graphics()->QuadsBegin();
+	Graphics()->SetColor(0.0f, 0.0f, 0.0f, 0.4f);
+	RenderTools()->DrawRoundRectExt(x-30.0f, 0.0f, 25.0f, 12.5f, 3.75f, CUI::CORNER_B);
+	Graphics()->QuadsEnd();
+
+	//draw the text
+	char aTimeStr[6];
+	str_timestamp_format(aTimeStr, sizeof(aTimeStr), "%H:%M");
+	TextRender()->Text(0, x-25.0f, (12.5f - 5.f) / 2.f, 5.0f, aTimeStr, -1);
+}
+
 void CHud::RenderSpectatorNotification()
 {
 	if(m_pClient->m_aClients[m_pClient->m_LocalClientID[Config()->m_ClDummy]].m_Team == TEAM_SPECTATORS &&
@@ -919,9 +938,6 @@ void CHud::RenderCheckpoint()
 
 		float Half = 300.0f*Graphics()->ScreenAspect()/2.0f;
 		
-		float w = TextRender()->TextWidth(0, 10, aBuf, -1, -1.0f);
-		TextRender()->Text(0, Half-w/2, 33, 10, aBuf, -1);
-
 		static CTextCursor s_Cursor(10);
 		s_Cursor.m_Align = TEXTALIGN_TC;
 		s_Cursor.Reset();
